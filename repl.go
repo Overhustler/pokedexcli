@@ -44,6 +44,11 @@ func buildCommands() map[string]cliCommand {
 		description: "display location areas",
 		callback:    CommandMap,
 	}
+	commands["mapb"] = cliCommand{
+		name:        "mapb",
+		description: "display previous location areas",
+		callback:    CommandMapB,
+	}
 
 	return commands
 }
@@ -51,6 +56,8 @@ func buildCommands() map[string]cliCommand {
 func repl() {
 	scanner := bufio.NewScanner(os.Stdin)
 	cfg := &config{}
+	cfg.nextURL = ""
+	cfg.previousURL = ""
 	commands := buildCommands()
 
 	for {
@@ -107,7 +114,24 @@ func CommandMap(c *config) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for l := range locations {
+	for _, l := range locations {
+		fmt.Println(l)
+	}
+	c.nextURL = urls[0]
+	c.previousURL = urls[1]
+	return nil
+}
+func CommandMapB(c *config) error {
+	if c.previousURL == "" {
+		println("You are on the first page")
+		return nil
+	}
+	locations, urls, err := pokeapi.GetPokeLocations(c.previousURL)
+	fmt.Printf("Type: %T\n", locations)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, l := range locations {
 		fmt.Println(l)
 	}
 	c.nextURL = urls[0]
