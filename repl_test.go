@@ -90,7 +90,7 @@ func TestCommandExit(t *testing.T) {
 
 func TestHelpCommand(t *testing.T) {
 	cfg := &config{}
-	commands := buildCommands(cfg)
+	commands := buildCommands()
 
 	// Capture stdout
 	oldStdout := os.Stdout

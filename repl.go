@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/Overhustler/pokedexcli/internal/pokeapi"
 )
 
 type cliCommand struct {
@@ -20,7 +22,7 @@ type config struct {
 	previousURL string
 }
 
-func buildCommands(c *config) map[string]cliCommand {
+func buildCommands() map[string]cliCommand {
 	commands := map[string]cliCommand{}
 
 	commands["exit"] = cliCommand{
@@ -49,7 +51,7 @@ func buildCommands(c *config) map[string]cliCommand {
 func repl() {
 	scanner := bufio.NewScanner(os.Stdin)
 	cfg := &config{}
-	commands := buildCommands(cfg)
+	commands := buildCommands()
 
 	for {
 		fmt.Print("Pokedex > ")
@@ -101,5 +103,14 @@ func CommandHelp(c *config, commands map[string]cliCommand) error {
 	return nil
 }
 func CommandMap(c *config) error {
+	locations, urls, err := pokeapi.GetPokeLocations(c.nextURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for l := range locations {
+		fmt.Println(l)
+	}
+	c.nextURL = urls[0]
+	c.previousURL = urls[1]
 	return nil
 }
