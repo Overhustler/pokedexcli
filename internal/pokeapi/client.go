@@ -2,6 +2,7 @@ package pokeapi
 
 import (
 	"encoding/json"
+	//"errors"
 	"io"
 	"log"
 	"net/http"
@@ -38,30 +39,34 @@ func (c *Client) GetPokeLocations(url string) ([]string, [2]string, error) {
 	}
 	var locations = Location{}
 	if value, ok := c.cache.Get(url); ok {
-		err = json.Unmarshal(value, &locations)
+		err := json.Unmarshal(value, &locations)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		res, err := c.httpClient.Get(url)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		if res.StatusCode > 299 {
+			log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		}
+
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.cache.Add(url, body)
+		err = json.Unmarshal(body, &locations)
+
+		if err != nil {
+			log.Fatalf("Error unmarshaling JSON: %s", err.Error())
+		}
 	}
-	res, err := c.httpClient.Get(url)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-
-	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = json.Unmarshal(body, &locations)
-
-	if err != nil {
-		log.Fatalf("Error unmarshaling JSON: %s", err.Error())
-	}
-
 	var locationsSlice []string
 
 	for l := range locations.Results {
@@ -79,3 +84,5 @@ func (c *Client) GetPokeLocations(url string) ([]string, [2]string, error) {
 	return locationsSlice, urls, nil
 
 }
+
+//func getHTTPResponse()

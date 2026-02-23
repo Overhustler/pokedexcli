@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Overhustler/pokedexcli/internal/pokeapi"
 )
@@ -18,8 +19,9 @@ type cliCommand struct {
 }
 
 type config struct {
-	nextURL     string
-	previousURL string
+	pokeApiClient pokeapi.Client
+	nextURL       string
+	previousURL   string
 }
 
 func buildCommands() map[string]cliCommand {
@@ -55,9 +57,14 @@ func buildCommands() map[string]cliCommand {
 
 func repl() {
 	scanner := bufio.NewScanner(os.Stdin)
-	cfg := &config{}
-	cfg.nextURL = ""
-	cfg.previousURL = ""
+	pokeClient := pokeapi.NewClient(5*time.Second, 5*time.Minute)
+
+	cfg := &config{
+		pokeApiClient: pokeClient,
+		nextURL:       "",
+		previousURL:   "",
+	}
+
 	commands := buildCommands()
 
 	for {
@@ -110,7 +117,7 @@ func CommandHelp(c *config, commands map[string]cliCommand) error {
 	return nil
 }
 func CommandMap(c *config) error {
-	locations, urls, err := pokeapi.GetPokeLocations(c.nextURL)
+	locations, urls, err := c.pokeApiClient.GetPokeLocations(c.nextURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -126,7 +133,7 @@ func CommandMapB(c *config) error {
 		println("You are on the first page")
 		return nil
 	}
-	locations, urls, err := pokeapi.GetPokeLocations(c.previousURL)
+	locations, urls, err := c.pokeApiClient.GetPokeLocations(c.previousURL)
 	fmt.Printf("Type: %T\n", locations)
 	if err != nil {
 		log.Fatal(err)
